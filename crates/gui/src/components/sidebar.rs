@@ -1,166 +1,486 @@
-use crate::{constants, utils::hoverable::hoverable};
-use discord_modloader::config;
-
 use freya::prelude::*;
-use itertools::Itertools as _;
+use modloader_core::{config, paths};
 
-use super::main_content::CurrentPage;
+use crate::components::button::Button;
+use crate::{AppPage, CONFIG, CURRENT_PAGE, THEME, utils::hoverable::hoverable};
 
-pub const SIDEBAR_WIDTH: f32 = 256.;
+const SIDEBAR_WIDTH: &str = "256";
 
 #[component]
-pub fn ProfileList(onpagechange: EventHandler<CurrentPage>) -> Element {
-    let ctx = use_context::<Signal<crate::AppState>>();
-
-    let profiles = use_memo(move || {
-        let profiles = ctx().config.profiles.clone();
-        profiles
-            .into_iter()
-            .sorted_by_key(|(id, _)| id.clone())
-            .collect::<Vec<_>>()
-    });
-
-    let create_profile = hoverable!(move |_conf| {
-        AnimColor::new(constants::BG_SECONDARY, constants::BLURPLE)
-            .ease(Ease::InOut)
-            .time(100)
-    });
-
-    let create_profile_anim = create_profile.animation.get();
-
-    let bg_create_profile = if let CurrentPage::CreateNewProfile(_) = ctx().current_page {
-        constants::BLURPLE
-    } else {
-        &create_profile_anim.read().read()
-    };
-
-    let settings = hoverable!(move |_conf| {
-        AnimColor::new(constants::BG_SECONDARY, constants::BLURPLE)
-            .ease(Ease::InOut)
-            .time(100)
-    });
-
-    let settings_anim = settings.animation.get();
-
-    let bg_settings = if ctx().current_page == CurrentPage::Settings {
-        constants::BLURPLE
-    } else {
-        &settings_anim.read().read()
-    };
+pub fn Sidebar() -> Element {
+    let mut display_mode = use_signal(|| SidebarDisplayMode::Profiles);
 
     rsx!(rect {
-        width: "{SIDEBAR_WIDTH}",
+        width: SIDEBAR_WIDTH,
         height: "100%",
         direction: "vertical",
-        background: constants::BG_PRIMARY,
-        padding: "8",
-        color: "white",
-        corner_radius: "4",
+        margin: "8 0 8 8",
+        color: THEME.read().text_primary,
 
-        label {
-            font_size: "18",
-            font_weight: "bold",
-            "Profiles"
-        }
+        spacing: "8",
 
-        ScrollView {
-            spacing: "4",
+        rect {
+            width: "100%",
+            height: "{48+12+12}",
+            padding: "12",
+            direction: "horizontal",
+            spacing: "8",
+            corner_radius: "8",
+            background: THEME.read().bg_primary,
 
-            {
-                profiles().into_iter().map(|(id, profile)| {
-                    rsx!(ProfileListEntry {
-                        profile: profile.clone(),
-                        selected: ctx().current_page == CurrentPage::SelectedProfile(id.clone()),
-                        onclick: move |_| {
-                            onpagechange.call(CurrentPage::SelectedProfile(id.clone()));
-                        }
-                    })
-                })
-            }
 
-            rect {
-                width: "100%",
-                padding: "8",
-                color: "white",
-                corner_radius: "4",
+            cross_align: "center",
+            main_align: "space-between",
 
-                background: bg_create_profile,
-                onmouseenter: create_profile.onmouseenter,
-                onmouseleave: create_profile.onmouseleave,
+            Button {
+                width: "48",
+                height: "48",
+                stretch: false,
+                padding: "{48/4}",
+                corner_radius: "{48/2}",
+                cross_align: "center",
+                main_align: "center",
 
-                onclick: move |_| {
-                    onpagechange.call(CurrentPage::CreateNewProfile(None));
+                onpress: move |_| {
+                    *CURRENT_PAGE.write() = AppPage::Home;
                 },
 
-                label {
-                    font_size: "18",
-                    font_weight: "bold",
-                    "Create New Profile"
+                svg {
+                    width: "24",
+                    height: "24",
+                    svg_data: static_bytes(crate::assets::HOME_ICON),
+                    fill: THEME.read().text_primary,
                 }
             }
 
-            rect {
-                width: "100%",
-                padding: "8",
-                color: "white",
-                corner_radius: "4",
+            Button {
+                width: "48",
+                height: "48",
+                stretch: false,
+                padding: "{48/4}",
+                corner_radius: "{48/2}",
+                cross_align: "center",
+                main_align: "center",
 
-                background: bg_settings,
-                onmouseenter: settings.onmouseenter,
-                onmouseleave: settings.onmouseleave,
-
-                onclick: move |_| {
-                    onpagechange.call(CurrentPage::Settings);
+                onpress: move |_| {
+                    *CURRENT_PAGE.write() = AppPage::Settings;
                 },
 
-                label {
-                    font_size: "18",
-                    font_weight: "bold",
-                    "Settings"
+                svg {
+                    width: "24",
+                    height: "24",
+                    svg_data: static_bytes(crate::assets::GEAR_ICON),
+                    fill: THEME.read().text_primary,
+                }
+            }
+
+            Button {
+                width: "48",
+                height: "48",
+                stretch: false,
+                padding: "{48/4}",
+                corner_radius: "{48/2}",
+                cross_align: "center",
+                main_align: "center",
+
+                onpress: move |_| {
+                    let _ = open::that(crate::assets::DISCORD_INVITE_LINK);
+                },
+
+                svg {
+                    width: "24",
+                    height: "24",
+                    svg_data: static_bytes(crate::assets::DISCORD_ICON),
+                    fill: THEME.read().text_primary,
+                }
+            }
+
+            Button {
+                width: "48",
+                height: "48",
+                stretch: false,
+                padding: "{48/4}",
+                corner_radius: "{48/2}",
+                cross_align: "center",
+                main_align: "center",
+
+                onpress: move |_| {
+                    let _ = open::that(crate::assets::GITHUB_REPO_LINK);
+                },
+
+                svg {
+                    width: "24",
+                    height: "24",
+                    svg_data: static_bytes(crate::assets::GITHUB_ICON),
+                    fill: THEME.read().text_primary,
                 }
             }
         }
 
+        rect {
+            background: THEME.read().bg_primary,
+            padding: "8",
+            corner_radius: "8",
+            ScrollView {
+                spacing: "8",
+                scrollbar_theme: theme_with!(ScrollBarTheme {
+                    background: THEME.read().bg_tertiary.into(),
+                }),
+
+                TabBar {
+                    selected: display_mode(),
+                    onclick: move |mode| {
+                        *display_mode.write() = mode;
+                    },
+                }
+
+                match display_mode() {
+                    SidebarDisplayMode::Profiles => {
+                        rsx!(
+                            {CONFIG.read().profiles.clone().into_iter().map(|(profile_id, profile)| {
+                                rsx!(Button {
+                                    width: "100%",
+                                    selected: *CURRENT_PAGE.read() == AppPage::Profile(profile_id.clone()),
+
+                                    onpress: move |_| {
+                                        *CURRENT_PAGE.write() = AppPage::Profile(profile_id.clone());
+                                    },
+
+                                    label {
+                                        font_size: "16",
+                                        "{profile.profile.name}"
+                                    }
+                                })
+                            })}
+
+                            Button {
+                                width: "100%",
+                                onpress: |_| {
+                                    let uuid = uuid::Uuid::new_v4().to_string();
+                                    let new_profile = config::ProfileConfig {
+                                        profile: config::Profile {
+                                            name: "New Profile".to_string(),
+                                            use_default_profile: false,
+                                        },
+                                        discord: Default::default(),
+                                        instances: Default::default(),
+                                    };
+
+                                    let toml_path = paths::config_profile_dir().join(format!("{uuid}.toml"));
+                                    if let Ok(toml) = toml::to_string(&new_profile) {
+                                        let _ = std::fs::write(&toml_path, toml);
+                                    }
+
+                                    *CONFIG.write() = config::Config::init();
+
+                                    *CURRENT_PAGE.write() = AppPage::Profile(uuid);
+                                },
+
+                                svg {
+                                        width: "24",
+                                        height: "24",
+                                        svg_data: static_bytes(crate::assets::PLUS_ICON),
+                                        fill: "#ffffff",
+                                    }
+
+                                label {
+                                    font_size: "16",
+                                    "Add New Profile"
+                                }
+                            }
+                        )
+                    }
+                    SidebarDisplayMode::Mods => {
+                        rsx!(
+                            {CONFIG.read().mods.clone().into_iter().map(|(mod_id, mod_)| {
+                                rsx!(Button {
+                                    width: "100%",
+                                    selected: *CURRENT_PAGE.read() == AppPage::Mod(mod_id.clone()),
+
+                                    onpress: move |_| {
+                                        *CURRENT_PAGE.write() = AppPage::Mod(mod_id.clone());
+                                    },
+
+                                    label {
+                                        font_size: "16",
+                                        "{mod_.name}"
+                                    }
+
+                                })
+                            })}
+
+                            Button {
+                                width: "100%",
+                                onpress: |_| {
+                                     *CURRENT_PAGE .write() = AppPage::ModFromTemplate;
+                                },
+
+                                svg {
+                                        width: "24",
+                                        height: "24",
+                                        svg_data: static_bytes(crate::assets::PLUS_ICON),
+                                        fill: "#ffffff",
+                                    }
+
+                                label {
+                                    font_size: "16",
+                                    "Add New Mod"
+                                }
+                            }
+                        )
+                    }
+                }
+            }
+        }
+    })
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum SidebarDisplayMode {
+    Profiles,
+    Mods,
+}
+
+#[component]
+fn TabBar(selected: SidebarDisplayMode, onclick: EventHandler<SidebarDisplayMode>) -> Element {
+    let anim_underscore_offset =
+        use_animation(move |_conf| AnimNum::new(0.0, 50.0).ease(Ease::InOut).time(100));
+
+    let anim_underscore_width =
+        use_animation(move |_conf| AnimNum::new(50.0, 100.0).ease(Ease::InOut).time(100));
+
+    rsx!(rect {
+        direction: "vertical",
+        padding: "0 0 1 0",
+
+        // The two tab buttons
+        rect {
+            direction: "horizontal",
+
+            Button {
+                width: "50%",
+                padding: "8",
+                main_align: "center",
+                cross_align: "center",
+                base_color: THEME.read().bg_primary,
+                target_color: THEME.read().bg_primary,
+                shadow: "0",
+
+                onmouseenter: move |_e| {
+                    if selected == SidebarDisplayMode::Mods {
+                        anim_underscore_width.run(AnimDirection::Forward);
+                        anim_underscore_offset.run(AnimDirection::Reverse);
+                    }
+                },
+                onmouseleave: move |_e| {
+                    if selected == SidebarDisplayMode::Mods {
+                        anim_underscore_width.run(AnimDirection::Reverse);
+                        anim_underscore_offset.run(AnimDirection::Forward);
+                    }
+                },
+                onpress: move |_e| {
+                    if anim_underscore_width.get().read().read() == 100.0 {
+                        anim_underscore_width.run(AnimDirection::Reverse);
+                    } else if selected == SidebarDisplayMode::Mods {
+                        anim_underscore_width.run(AnimDirection::Reverse);
+                        anim_underscore_offset.run(AnimDirection::Reverse);
+                    }
+                    onclick(SidebarDisplayMode::Profiles);
+                },
+                label {
+                    font_size: "18",
+
+                    "Profiles"
+                }
+            }
+            Button {
+                width: "50%",
+                padding: "8",
+                main_align: "center",
+                cross_align: "center",
+                base_color: THEME.read().bg_primary,
+                target_color: THEME.read().bg_primary,
+                shadow: "0",
+
+                onmouseenter: move |_e| {
+                    if selected == SidebarDisplayMode::Profiles {
+                        anim_underscore_width.run(AnimDirection::Forward);
+                    }
+                },
+                onmouseleave: move |_e| {
+                    if selected == SidebarDisplayMode::Profiles {
+                        anim_underscore_width.run(AnimDirection::Reverse);
+                    }
+                },
+                onpress: move |_| {
+                    if selected == SidebarDisplayMode::Profiles || anim_underscore_width.get().read().read() != 50.0 {
+                        anim_underscore_offset.run(AnimDirection::Forward);
+                        anim_underscore_width.run(AnimDirection::Reverse);
+                    }
+                    onclick(SidebarDisplayMode::Mods);
+                },
+                label {
+                    font_size: "18",
+
+                    "Mods"
+                }
+            }
+        }
+
+        rect {
+            direction: "horizontal",
+            // This moves the underline left/right
+            rect {
+                width: "{anim_underscore_offset.get().read().read()}%",
+                height: "2",
+            }
+
+            // The underline
+            rect {
+                width: "{anim_underscore_width.get().read().read()}%",
+                height: "2",
+                background: THEME.read().blurple,
+            }
+        }
     })
 }
 
 #[component]
-fn ProfileListEntry(
-    profile: config::ProfileConfig,
-    selected: bool,
-    onclick: EventHandler<MouseEvent>,
-) -> Element {
-    let bg_anim = hoverable!(move |_conf| {
-        AnimColor::new(constants::BG_SECONDARY, constants::BLURPLE)
+fn HomeIconButton() -> Element {
+    let home_icon = static_bytes(crate::assets::HOME_ICON);
+
+    let animation = hoverable!(move |_conf| {
+        AnimColor::new(THEME.read().bg_tertiary, THEME.read().blurple)
             .ease(Ease::InOut)
             .time(100)
     });
 
-    let bg_color = bg_anim.animation.get();
-
-    let bg_color = if selected {
-        constants::BLURPLE
-    } else {
-        &bg_color.read().read()
-    };
+    let bg_color = animation.animation.get().read().read();
 
     rsx!(rect {
-        width: "100%",
-        // height: "32",
-        padding: "8",
-        color: "white",
-        corner_radius: "4",
+        width: "48",
+        height: "48",
+        corner_radius: "{48/2}",
 
         background: bg_color,
-        onmouseenter: bg_anim.onmouseenter,
-        onmouseleave: bg_anim.onmouseleave,
+        onmouseenter: animation.onmouseenter,
+        onmouseleave: animation.onmouseleave,
 
-        onclick: move |evt| onclick.call(evt),
+        main_align: "center",
+        cross_align: "center",
 
-        label {
-            font_size: "18",
-            font_weight: "bold",
-            {profile.profile.name}
+        svg {
+            width: "24",
+            height: "24",
+            svg_data: home_icon,
+            fill: "#ffffff",
+        }
+    })
+}
+
+#[component]
+fn SettingsButton() -> Element {
+    let gear_icon = static_bytes(crate::assets::GEAR_ICON);
+
+    let animation = hoverable!(move |_conf| {
+        AnimColor::new(THEME.read().bg_tertiary, THEME.read().blurple)
+            .ease(Ease::InOut)
+            .time(100)
+    });
+
+    let bg_color = animation.animation.get().read().read();
+
+    rsx!(rect {
+        width: "48",
+        height: "48",
+        corner_radius: "{48/2}",
+
+        background: bg_color,
+        onmouseenter: animation.onmouseenter,
+        onmouseleave: animation.onmouseleave,
+
+        main_align: "center",
+        cross_align: "center",
+
+        svg {
+            width: "24",
+            height: "24",
+            svg_data: gear_icon,
+            fill: "#ffffff",
+        }
+    })
+}
+
+#[component]
+fn GithubButton() -> Element {
+    let github_icon = static_bytes(crate::assets::GITHUB_ICON);
+
+    let animation = hoverable!(move |_conf| {
+        AnimColor::new(THEME.read().bg_tertiary, THEME.read().blurple)
+            .ease(Ease::InOut)
+            .time(100)
+    });
+
+    let bg_color = animation.animation.get().read().read();
+
+    rsx!(rect {
+        width: "48",
+        height: "48",
+        corner_radius: "{48/2}",
+
+        background: bg_color,
+        onmouseenter: animation.onmouseenter,
+        onmouseleave: animation.onmouseleave,
+
+        main_align: "center",
+        cross_align: "center",
+
+        onclick: move |_| {
+            let _ = open::that(crate::assets::GITHUB_REPO_LINK);
+        },
+
+        svg {
+            width: "24",
+            height: "24",
+            svg_data: github_icon,
+            fill: "#ffffff",
+        }
+    })
+}
+
+#[component]
+fn DiscordButton() -> Element {
+    let discord_icon = static_bytes(crate::assets::DISCORD_ICON);
+
+    let animation = hoverable!(move |_conf| {
+        AnimColor::new(THEME.read().bg_tertiary, THEME.read().blurple)
+            .ease(Ease::InOut)
+            .time(100)
+    });
+
+    let bg_color = animation.animation.get().read().read();
+
+    rsx!(rect {
+        width: "48",
+        height: "48",
+        corner_radius: "{48/2}",
+
+        background: bg_color,
+        onmouseenter: animation.onmouseenter,
+        onmouseleave: animation.onmouseleave,
+
+        main_align: "center",
+        cross_align: "center",
+
+        onclick: move |_| {
+            let _ = open::that(crate::assets::DISCORD_INVITE_LINK);
+        },
+
+        svg {
+            width: "26",
+            height: "26",
+            svg_data: discord_icon,
+            fill: "#ffffff",
         }
     })
 }

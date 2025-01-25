@@ -5,19 +5,23 @@ members = ["crates/*"]
 edition = "2021"
 name = "discord-modloader"
 description = "An in-memory mod loader for Discord"
-version = "2.0.0"
+version = "0.2.0-beta.1"
 license = "LGPL-3.0"
 authors = ["Megumin <megumin@megu.dev>"]
 repository = "https://github.com/MeguminSama/Discord-ModLoader/"
 
+[lib]
+crate-type = ["cdylib", "rlib"]
+
 [dependencies]
 clap = { version = "4.5.20", features = ["derive"] }
-libdiscord-modloader = { path = "crates/libdiscord-modloader" }
 gui = { path = "crates/gui" }
-gui-new = { path = "crates/gui-new" }
-dirs = "5.0.1"
+electron-hook = {version = "0.2.0-beta.4", features = ["self-executable"] }
+modloader-core = { path = "./crates/modloader-core" }
 libc = "0.2.167"
-octocrab = "0.42.1"
+
+[build-dependencies]
+electron-hook-build-scripts = { path = "../electron-hook/crates/electron-hook-build-scripts" }
 
 [package.metadata.packager]
 product-name = "Discord Modloader"
@@ -31,8 +35,8 @@ resources = [
     "LICENSE",
     { src = "configs/templates", target = "templates" },
     { src = "configs/icons", target = "icons" },
-    { src = "target/release/libdiscord_modloader.dll", target = "libdiscord_modloader.dll" },
-    { src = "target/release/libdiscord_modloader.so", target = "libdiscord_modloader.so" },
+    { src = "target/release/electron_hook.dll", target = "electron_hook.dll" },
+    { src = "target/release/electron_hook.so", target = "electron_hook.so" },
 ]
 log-level = "trace"
 icons = [

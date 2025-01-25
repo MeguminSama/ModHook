@@ -1,0 +1,19 @@
+[package]
+name = "modloader-core"
+version = "0.2.0-beta.1"
+edition = "2021"
+
+[dependencies]
+dialog = "0.3.0"
+dirs = "6.0.0"
+flate2 = "1.0.35"
+octocrab = "0.43.0"
+serde = { version = "1.0.217", features = ["derive"] }
+electron-hook = {version = "0.2.0-beta.4", features = ["self-executable"] }
+serde_json = "1.0.137"
+strum = { version = "0.26.3", features = ["derive"] }
+sysinfo = { version = "0.33.1", default-features = false, features = ["system", "user"] }
+tar = "0.4.43"
+toml = "0.8.19"
+ureq = { version = "3.0.1", features = ["json"] }
+zip = "2.2.2"

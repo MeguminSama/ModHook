@@ -1,0 +1,53 @@
+name: Publish
+
+on:
+  push:
+    tags:
+      - "v*"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  package:
+    if: ${{ !startsWith(github.head_ref, 'renovate/') }}
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [ubuntu-latest, windows-latest] # no macos-latest yet
+
+    runs-on: ${{ matrix.platform }}
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@nightly
+      - run: cargo +nightly install cargo-packager --locked
+      - run: cargo +nightly release
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: discord-modloader-${{ matrix.platform }}
+          path: dist/*
+  
+  release:
+    needs: package
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist/
+          merge-multiple: true
+      - name: Release
+        uses: svenstaro/upload-release-action@2.9.0
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: dist/{PKGBUILD,discord-modloader*}
+          tag: ${{ github.ref }}
+          overwrite: true
+          file_glob: true
+          draft: true
+          prerelease: ${{ contains(github.ref, 'beta') }}

@@ -1,0 +1,5 @@
+[mod]
+name = "Vencord"
+path = "/path/to/vencord/dist"
+entrypoint = "patcher.js"
+icon = "vencord.png"

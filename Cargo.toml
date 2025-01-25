@@ -1,17 +1,49 @@
+[workspace]
+members = ["crates/*"]
+
 [package]
 edition = "2021"
-name = "modhook"
-version = "1.0.3"
-
-[lib]
-crate-type = ["cdylib"]
-name = "libmodhook"
+name = "discord-modloader"
+description = "An in-memory mod loader for Discord"
+version = "2.0.0"
+license = "LGPL-3.0"
+authors = ["Megumin <megumin@megu.dev>"]
+repository = "https://github.com/MeguminSama/Discord-ModLoader/"
 
 [dependencies]
-clap = { version = "4.4.7", features = ["derive"] }
-detours-sys = {version = "0.1.2"}
-widestring = "1.0.2"
-winapi = {version = "0.3.9", features = ["winbase", "handleapi", "minwindef", "consoleapi", "winnt", "memoryapi", "namedpipeapi"]}
+clap = { version = "4.5.20", features = ["derive"] }
+libdiscord-modloader = { path = "crates/libdiscord-modloader" }
+gui = { path = "crates/gui" }
+gui-new = { path = "crates/gui-new" }
+dirs = "5.0.1"
+libc = "0.2.167"
+octocrab = "0.42.1"
 
-[build-dependencies]
-asar = "0.2.0"
+[package.metadata.packager]
+product-name = "Discord Modloader"
+identifier = "dev.megu.discord.modloader"
+authors = ["Megumin <megumin@megu.dev"]
+homepage = "https://github.com/MeguminSama/Discord-ModLoader"
+out-dir = "./dist"
+before-packaging-command = "cargo build --release --all"
+resources = [
+    "README.md",
+    "LICENSE",
+    { src = "configs/templates", target = "templates" },
+    { src = "configs/icons", target = "icons" },
+    { src = "target/release/libdiscord_modloader.dll", target = "libdiscord_modloader.dll" },
+    { src = "target/release/libdiscord_modloader.so", target = "libdiscord_modloader.so" },
+]
+log-level = "trace"
+icons = [
+    "assets/logo_development.svg",
+    "assets/logo_development.ico",
+    "assets/32x32.png",
+    "assets/64x64.png",
+    "assets/128x128.png",
+    "assets/256x256.png",
+    "assets/512x512.png",
+    "assets/1024x1024.png",
+    "assets/2048x2048.png",
+    "assets/4096x4096.png",
+]

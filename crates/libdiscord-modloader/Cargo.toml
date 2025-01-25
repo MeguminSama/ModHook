@@ -10,8 +10,16 @@ crate-type = ["cdylib", "lib"]
 [dependencies]
 asar = "0.3.0"
 dirs = "5.0.1"
+flate2 = "1.0.35"
+octocrab = { version = "0.42.1", default-features = false }
 serde = { version = "1.0.210", features = ["serde_derive"] }
+serde_json = "1.0.135"
+strum = { version = "0.26.3", features = ["derive"] }
+sysinfo = "0.33.0"
+tar = "0.4.43"
 toml = "0.8.19"
+ureq = { version = "2.12.1", features = ["json"] }
+zip = "2.2.2"
 
 [target.'cfg(windows)'.dependencies]
 winapi = { version = "0.3.9", features = [

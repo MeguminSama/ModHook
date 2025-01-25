@@ -9,6 +9,12 @@ struct Args {
 
     #[clap(short, long)]
     pub instance: Option<String>,
+
+    #[clap(allow_hyphen_values = true, last = true)]
+    pub launch_args: Vec<String>,
+
+    #[clap(short, long, default_value = "false")]
+    pub force_update: bool,
 }
 
 #[cfg(target_os = "macos")]
@@ -23,23 +29,43 @@ fn main() {
     let args: Args = Args::parse();
 
     if let (Some(profile_id), Some(instance_id)) = (args.profile, args.instance) {
-        let mut config = config::Config::init();
-        config.validate();
+        // When spawned from the GUI, the process is a child of the GUI process.
+        // We need to detach it from the GUI process to prevent it from being killed when the GUI is closed.
+        #[cfg(target_os = "linux")]
+        unsafe {
+            libc::setsid()
+        };
 
-        unsafe { load_profile(&config, &profile_id, &instance_id) };
+        let config = config::Config::init();
+
+        unsafe {
+            load_profile(
+                &config,
+                &profile_id,
+                &instance_id,
+                args.launch_args,
+                args.force_update,
+            )
+        };
     } else {
-        gui::start_gui();
+        gui_new::start_gui();
     }
 }
 
 #[cfg(target_os = "linux")]
-unsafe fn load_profile(config: &config::Config, profile_id: &str, instance_id: &str) {
+unsafe fn load_profile(
+    config: &config::Config,
+    profile_id: &str,
+    instance_id: &str,
+    args: Vec<String>,
+    force_update: bool,
+) {
     use discord_modloader::paths::{self, ensure_dir};
 
     let profile = config
         .profiles
         .get(profile_id)
-        .expect(&format!("Failed to find profile '{}'.", profile_id));
+        .unwrap_or_else(|| panic!("Failed to find profile '{}'.", profile_id));
 
     // Try to use the local instance of libdiscord_modloader.so first.
     let current_exe = std::env::current_exe().unwrap();
@@ -54,7 +80,7 @@ unsafe fn load_profile(config: &config::Config, profile_id: &str, instance_id: &
         }
     }
 
-    let asar_path = init_current_cache(config, profile_id, instance_id);
+    let asar_path = init_current_cache(config, profile_id, instance_id, force_update);
 
     let working_dir = if profile.profile.use_default_profile {
         std::path::Path::new(&profile.discord.executable)
@@ -72,7 +98,7 @@ unsafe fn load_profile(config: &config::Config, profile_id: &str, instance_id: &
         .current_dir(working_dir)
         .env("LD_PRELOAD", shared_object.to_str().unwrap())
         .env("MODLOADER_ASAR_PATH", asar_path)
-        // .args(["--trace-warnings"])
+        .args(args)
         .spawn()
         .expect("Failed to launch instance.");
 
@@ -82,7 +108,13 @@ unsafe fn load_profile(config: &config::Config, profile_id: &str, instance_id: &
 }
 
 #[cfg(target_os = "windows")]
-unsafe fn load_profile(config: &config::Config, instance: &config::Instance) {
+unsafe fn load_profile(
+    config: &config::Config,
+    instance: &config::Instance,
+    args: Vec<String>,
+    force_update: bool,
+) {
+    // TODO: Implement args on windows
     use detours_sys::{DetourCreateProcessWithDllExA, _PROCESS_INFORMATION, _STARTUPINFOA};
     use libdiscordmodloader::discord::get_discord_exe;
     use winapi::um::{

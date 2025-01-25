@@ -1,12 +1,18 @@
 [mod]
 name = "moonlight"
-path = "/path/to/moonlight/dist"
 entrypoint = "injector.js"
 icon = "moonlight.png"
 
 [mod.loader]
 require = """
-require("__MOD_ENTRYPOINT_FILE__").inject(
+require("$ENTRYPOINT").inject(
     require("path").resolve(__dirname, "../_app.asar")
 );
 """
+
+[mod.updater]
+github_org = "moonlight-mod"
+github_repo = "moonlight"
+dist_file_name = "dist.tar.gz"
+dist_file_type = "TarGz"
+icon_url = "https://raw.githubusercontent.com/moonlight-mod/moonlight-mod.github.io/main/src/img/logo.png"

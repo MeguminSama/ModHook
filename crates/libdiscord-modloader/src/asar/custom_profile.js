@@ -1,5 +1,5 @@
 const { app } = require("electron");
-const customAppDir = "__CUSTOM_PROFILE_DIR__";
+const customAppDir = "$PROFILE";
 
 const _setPath = app.setPath;
 

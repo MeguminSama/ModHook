@@ -9,13 +9,13 @@ static MODLOADER_ASAR_PATH: LazyLock<String> =
     LazyLock::new(|| std::env::var("MODLOADER_ASAR_PATH").unwrap());
 
 #[link(name = "dl")]
-extern "C" {
-    fn dlsym(handle: *const c_void, symbol: *const c_char) -> *const c_void;
+unsafe extern "C" {
+    unsafe fn dlsym(handle: *const c_void, symbol: *const c_char) -> *const c_void;
 }
 
-extern "C" {
+unsafe extern "C" {
     #[link_name = "uv_fs_lstat"]
-    fn original_uv_fs_lstat(
+    unsafe fn original_uv_fs_lstat(
         loop_: *const c_void,
         req: *const c_void,
         path: *const c_char,
@@ -45,6 +45,7 @@ unsafe extern "C" fn __libc_start_main(
     rtld_fini: extern "C" fn(),
     stack_end: *mut c_void,
 ) -> i32 {
+    #[allow(clippy::missing_transmute_annotations)]
     UvFsLstatDetour
         .initialize(
             std::mem::transmute::<UvFsLstat, _>(original_uv_fs_lstat),
@@ -75,7 +76,6 @@ static_detour! {
     static UvFsLstatDetour: fn(*const c_void, *const c_void, *const c_char, *mut c_void) -> i32;
 }
 
-#[no_mangle]
 #[export_name = "uv_fs_lstat"]
 unsafe extern "C" fn export_uv_vs_lstat(
     loop_: *const c_void,

@@ -1,2 +1,22 @@
 [alias]
 release = "packager --release -f all -v"
+
+[target.x86_64-unknown-linux-gnu]
+rustflags = ["-Zthreads=0", "-Zshare-generics=y", "-Clink-arg=-fuse-ld=mold"]
+
+[profile.release]
+codegen-units = 1
+lto = "fat"
+panic = "abort"
+opt-level = "z"
+
+[profile.dev]
+panic = "abort"
+
+[profile.fast-release]
+inherits = "release"
+codegen-backend = "cranelift"
+codegen-units = 1
+lto = "fat"
+panic = "abort"
+opt-level = "z"

@@ -14,7 +14,10 @@ repository = "https://github.com/MeguminSama/Discord-ModLoader/"
 clap = { version = "4.5.20", features = ["derive"] }
 libdiscord-modloader = { path = "crates/libdiscord-modloader" }
 gui = { path = "crates/gui" }
+gui-new = { path = "crates/gui-new" }
 dirs = "5.0.1"
+libc = "0.2.167"
+octocrab = "0.42.1"
 
 [package.metadata.packager]
 product-name = "Discord Modloader"

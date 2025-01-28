@@ -1,0 +1,29 @@
+
+[alias]
+release = "packager --release -f all -v"
+build-win = "build --bin discord-modloader"
+build-unix = "build --lib"
+
+[target.x86_64-unknown-linux-gnu]
+rustflags = [
+    "-Zthreads=0",
+    "-Zshare-generics=y",
+    "-Ctarget-feature=-crt-static",
+]
+
+[profile.release]
+codegen-units = 1
+lto = "fat"
+panic = "abort"
+opt-level = "z"
+
+[profile.dev]
+panic = "abort"
+
+[profile.fast-release]
+inherits = "release"
+codegen-backend = "cranelift"
+codegen-units = 1
+lto = "fat"
+panic = "abort"
+opt-level = "z"

@@ -1,2 +1,7 @@
 /target
-app.asar
+/dist
+
+# Hide everything in /configs except for /configs/icons and /configs/templates
+/configs/*
+!/configs/icons
+!/configs/templates

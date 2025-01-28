@@ -1,17 +1,53 @@
+[workspace]
+members = ["crates/*"]
+
 [package]
 edition = "2021"
-name = "modhook"
-version = "1.0.3"
+name = "discord-modloader"
+description = "An in-memory mod loader for Discord"
+version = "0.2.0-beta.1"
+license = "LGPL-3.0"
+authors = ["Megumin <megumin@megu.dev>"]
+repository = "https://github.com/MeguminSama/Discord-ModLoader/"
 
 [lib]
-crate-type = ["cdylib"]
-name = "libmodhook"
+crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-clap = { version = "4.4.7", features = ["derive"] }
-detours-sys = {version = "0.1.2"}
-widestring = "1.0.2"
-winapi = {version = "0.3.9", features = ["winbase", "handleapi", "minwindef", "consoleapi", "winnt", "memoryapi", "namedpipeapi"]}
+clap = { version = "4.5.20", features = ["derive"] }
+gui = { path = "crates/gui" }
+electron-hook = {version = "0.2.0-beta.4", features = ["self-executable"] }
+modloader-core = { path = "./crates/modloader-core" }
+libc = "0.2.167"
 
 [build-dependencies]
-asar = "0.2.0"
+electron-hook-build-scripts = { path = "../electron-hook/crates/electron-hook-build-scripts" }
+
+[package.metadata.packager]
+product-name = "Discord Modloader"
+identifier = "dev.megu.discord.modloader"
+authors = ["Megumin <megumin@megu.dev"]
+homepage = "https://github.com/MeguminSama/Discord-ModLoader"
+out-dir = "./dist"
+before-packaging-command = "cargo build --release --all"
+resources = [
+    "README.md",
+    "LICENSE",
+    { src = "configs/templates", target = "templates" },
+    { src = "configs/icons", target = "icons" },
+    { src = "target/release/electron_hook.dll", target = "electron_hook.dll" },
+    { src = "target/release/electron_hook.so", target = "electron_hook.so" },
+]
+log-level = "trace"
+icons = [
+    "assets/logo_development.svg",
+    "assets/logo_development.ico",
+    "assets/32x32.png",
+    "assets/64x64.png",
+    "assets/128x128.png",
+    "assets/256x256.png",
+    "assets/512x512.png",
+    "assets/1024x1024.png",
+    "assets/2048x2048.png",
+    "assets/4096x4096.png",
+]
